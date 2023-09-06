@@ -3,8 +3,6 @@ STUNMESH is a Wireguard helper tool to get through Full-Cone NAT.
 
 Inspired by manuels' [wireguard-p2p](https://github.com/manuels/wireguard-p2p) project
 
-Tested with UBNT ER-X v2.0.8-hotfix.1 and Wireguard v1.0.20210424
-
 :warning: This PoC code is dirty and need refactor.
 
 ## Implement
@@ -17,14 +15,7 @@ stunmesh-go assume you only have one peer per wireguard interface.
 
 Still need refactor to get plugin support
 
-## Build
-
-### Build for UBNT ER-X
-```
-./build-for-erx.sh
-```
-
-### Build for Linux in native environment
+## Build for Linux in native environment
 ```
 go build .
 ```
@@ -33,110 +24,21 @@ go build .
 Please edit `start.sh` and execute it with root privileges.<br />
 You should use crontab to trigger stunmesh-go periodically to update Cloudflare TXT record and receive remote peer's public info. <br />
 
-## Extra Usage
-You could use OSPF on Wireguard interface to create full mesh site-to-site VPN with dynamic routing.<br />
-Never be bothered to setup static route.<br />
+## Configuration
 
-### Dynamic Routing
-Wireguard interface didn't have link status (link up, down)<br />
-OSPF will say hello to remote peer periodically to check peer status.<br />
-It will also check wireguard's link status is up or not.<br />
-You can also reduce hello and dead interval in OSPF to make rapid response<br />
-Please also make sure setup access list or route map in OSPF to prevent redistribute public ip to remote peer.<br />
-It might cause to get incorrect route to remote peer endpoint and fail connect remote peer if you have multi-node.<br />
-
-BGP will only update when route table is changed.<br />
-It will take longer time to determine link status.<br />
-Not suggest to use BFD with BGP when router is small scale.<br />
-It will take too much overhead for link status detection<br />
-
-### VRF
-If you used this with your public network, and it's possible to enable VRF, please enable VRF with Wireguard interface.<br />
-Once you need Wireguard interface or private network to access internet.<br />
-Try to use VRF leaking to setup another default route to internet<br />
-
-## Example config
-
-Wireguard in Edgerouter
-```
-    wireguard wg03 {
-        address <some route peer to peer IP>/30
-        description "to lab"
-        ip {
-            ospf {
-                network point-to-point
-            }
-        }
-        listen-port <wg port>
-        mtu 1420
-        peer <Remote Peer Public Key> {
-            allowed-ips 0.0.0.0/0
-            allowed-ips 224.0.0.5/32
-            persistent-keepalive 15
-        }
-        private-key ****************
-        route-allowed-ips false
-    }
-```
-
-OSPF in Edgerouter
-```
-policy {
-    access-list 1 {
-        description OSPF
-        rule 1 {
-            action permit
-            source {
-                inverse-mask 0.0.0.255
-                network <Your LAN CIDR>
-            }
-        }
-        rule 99 {
-            action deny
-            source {
-                any
-            }
-        }
-    }
-}
-
-protocols {
-    ospf {
-        access-list 1 {
-            export connected
-        }
-        area 0.0.0.0 {
-            network <Your network CIDR>
-        }
-        parameters {
-            abr-type cisco
-            router-id <Router ID>
-        }
-        passive-interface default
-        passive-interface-exclude <Your WG interface>
-        redistribute {
-            connected {
-                metric-type 2
-            }
-        }
-    }
-}
-```
-
-in stunmesh-go start.sh
+### start.sh
 ```
 #!/bin/bash
 
-export CF_API_KEY=<Your API Key>
-export CF_API_EMAIL=<Your email>
+export CF_API_TOKEN=<Your API Token>
 export CF_ZONE_NAME=<Your Domain>
 
-wgs=("wg02" "wg03")
+wg_interfaces=("wg02" "wg03")
 
-for wg in ${wgs[@]}
+for wg_interface in ${wg_interfaces[@]}
 do
-        echo $wg
-        export WG=$wg
+        echo $wg_interface
+        export WG=$wg_interface
         /tmp/stunmesh-go
         sleep 10
         /tmp/stunmesh-go
