@@ -1,15 +1,14 @@
 #!/bin/bash
 
-export CF_API_KEY=
-export CF_API_EMAIL=
+export CF_API_TOKEN=
 export CF_ZONE_NAME=
 
-wgs=("wg02")
+wg_interfaces=("wg0")
 
-for wg in ${wgs[@]}
+for wg_interface in ${wg_interfaces[@]}
 do
-	echo $wg
-	export WG=$wg
+	echo $wg_interface
+	export WG=$wg_interface
 	/tmp/stunmesh-go
 	sleep 10s
 	/tmp/stunmesh-go

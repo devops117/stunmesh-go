@@ -239,8 +239,7 @@ func main() {
 
 	// read config from env
 	WG := os.Getenv("WG")
-	CF_API_KEY := os.Getenv("CF_API_KEY")
-	CF_API_EMAIL := os.Getenv("CF_API_EMAIL")
+	CF_API_TOKEN := os.Getenv("CF_API_TOKEN")
 	CF_ZONE_NAME := os.Getenv("CF_ZONE_NAME")
 
 	// get wg setting
@@ -320,7 +319,7 @@ func main() {
 
 
 	// prepare save to CloudFlare
-	CFApi, err := cloudflare.New(CF_API_KEY, CF_API_EMAIL)
+	CFApi, err := cloudflare.NewWithAPIToken(CF_API_TOKEN)
 	if err != nil {
 		log.Fatal(err)
 	}
